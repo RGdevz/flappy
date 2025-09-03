@@ -1,0 +1,44 @@
+name: Build Raylib Web
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: latest
+
+    - name: Install xmake prebuilt binary
+      run: |
+        curl -L -o xmake https://github.com/xmake-io/xmake/releases/download/v3.0.1/xmake-bundle-v3.0.1.linux.x86_64
+        chmod +x xmake
+        sudo mv xmake /usr/local/bin/
+        xmake --version
+
+    - name: Prepare build directory
+      run: mkdir -p build/web
+
+    - name: Build Web Target
+      run: |
+        xmake -F xmake-mobile.lua
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-build
+        path: build/web/
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build/web
+        publish_branch: gh-pages
